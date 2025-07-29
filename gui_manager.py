@@ -61,8 +61,7 @@ class MainWindow(tk.Tk):
                 'Select a row to delete!', foreground='red')
             return
 
-        for row_id in selected_rows:
-            self.db_manager.delete_row(row_id)
+        self.db_manager.delete_rows(selected_rows)
         self.info_display.update_text(
             'Entry deleted successfully', foreground='green')
         self.treeview.update(self.db_manager.get_data())
