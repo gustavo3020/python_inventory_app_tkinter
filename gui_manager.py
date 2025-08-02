@@ -19,7 +19,7 @@ class MainWindow(tk.Tk):
         "solar", "superhero", "darkly", "cyborg", "vapor"
         ]
 
-    def __init__(self, title, db_manager):
+    def __init__(self, title, db_manager, config_manager):
         """
         Initializes the main application window.
 
@@ -31,9 +31,12 @@ class MainWindow(tk.Tk):
             title (str): The title to be displayed on the application window.
             db_manager (DatabaseManager): An instance of the DatabaseManager
                 to handle all database interactions.
+            config_manager (ConfigManager): An instance of the ConfigManager
+                to handle all configuration settings.
         """
         super().__init__()
         self.db_manager = db_manager
+        self.config_manager = config_manager
         self.style = Style(theme=self.available_themes[0])
         self.title(title)
         self._create_frames()
@@ -168,26 +171,30 @@ class MainWindow(tk.Tk):
         """
         Creates a Combobox widget for selecting application themes.
 
-        The widget is populated with a list of available themes and its
-        selection event is bound to a method that changes the theme.
+        The widget's initial selection is set from the saved configuration,
+        and its selection event is bound to a method that changes and saves
+        the theme.
         """
-        self.selected_theme = tk.StringVar(value=self.available_themes[0])
+        self.selected_theme = tk.StringVar(
+            value=self.config_manager.get_theme())
         self.combobox = ttk.Combobox(
             self.button_frame, values=self.available_themes, state='readonly',
             textvariable=self.selected_theme)
-        self.combobox.bind("<<ComboboxSelected>>", self._on_combobox_selection)
+        self.combobox.bind("<<ComboboxSelected>>", self._update_theme)
         self.combobox.pack(side='right')
+        self._update_theme()
 
-    def _on_combobox_selection(self, event):
+    def _update_theme(self, event=None):
         """
-        Handles the theme change when a new theme is selected from the
-        Combobox.
+        Applies a new theme and saves the selection to the configuration file.
 
-        Args:
-            event (tk.Event): The event object for the Combobox selection.
+        This method is called both by the Combobox selection event and manually
+        during initialization to ensure the correct theme is loaded.
         """
         theme = self.selected_theme.get()
         self.style.theme_use(theme)
+        if theme != self.config_manager.get_theme():
+            self.config_manager.set_theme(theme)
 
     def _create_entrys(self):
         """
