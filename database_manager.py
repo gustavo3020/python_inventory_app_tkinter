@@ -68,11 +68,27 @@ class DatabaseManager():
             raise DatabaseError(
                 f'An error occurred in the database operation: {e}')
 
-    def get_data(self):
+    def get_data(self, search_term=None, order_by_column=None,
+                 order_direction='asc'):
         try:
             with sqlite3.connect(self.path) as connection:
                 cursor = connection.cursor()
-                cursor.execute(f'SELECT * FROM {self.table}')
+                query = f"SELECT * FROM {self.table}"
+                params = []
+
+                if search_term and search_term.strip():
+                    search_term = search_term.strip()
+                    where_clause, filter_params = self._build_filter_clause(
+                        search_term)
+                    query += where_clause
+                    params.extend(filter_params)
+
+                if order_by_column and order_by_column in self.columns:
+                    direction = ('ASC' if order_direction.lower() == 'asc'
+                                 else 'DESC')
+                    query += f" ORDER BY {order_by_column} {direction}"
+
+                cursor.execute(query, params)
                 return cursor.fetchall()
         except sqlite3.Error as e:
             raise DatabaseError(f"Failed to retrieve data: {e}")
@@ -96,6 +112,27 @@ class DatabaseManager():
         except Exception as e:
             raise DatabaseError(
                 f'An error occurred in the database operation: {e}')
+
+    def _build_filter_clause(self, search_term):
+        conditions = ["name LIKE ?"]
+        params = [f"%{search_term}%"]
+
+        try:
+            num_search_term = float(search_term)
+            conditions.append("quantity = ?")
+            params.append(num_search_term)
+            conditions.append("price = ?")
+            params.append(num_search_term)
+        except ValueError:
+            pass
+
+        conditions.append("CAST(quantity AS TEXT) LIKE ?")
+        params.append(f"%{search_term}%")
+        conditions.append("CAST(price AS TEXT) LIKE ?")
+        params.append(f"%{search_term}%")
+
+        where_clause = " WHERE " + " OR ".join(conditions)
+        return where_clause, params
 
 
 class DatabaseError(Exception):
