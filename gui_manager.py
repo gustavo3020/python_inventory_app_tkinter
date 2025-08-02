@@ -1,6 +1,8 @@
 import tkinter as tk
 import ttkbootstrap as ttk
+from ttkbootstrap import Style
 from database_manager import DatabaseError
+from tkinter import messagebox
 
 
 class MainWindow(tk.Tk):
@@ -11,6 +13,11 @@ class MainWindow(tk.Tk):
     interface. It manages all user interactions, delegates data operations
     to the `DatabaseManager`, and handles UI updates and error displays.
     """
+    available_themes = [
+        "cosmo", "flatly", "journal", "litera", "lumen", "minty", "pulse",
+        "sandstone", "united", "yeti", "morph", "simplex", "cerculean",
+        "solar", "superhero", "darkly", "cyborg", "vapor"
+        ]
 
     def __init__(self, title, db_manager):
         """
@@ -27,10 +34,12 @@ class MainWindow(tk.Tk):
         """
         super().__init__()
         self.db_manager = db_manager
+        self.style = Style(theme=self.available_themes[0])
         self.title(title)
         self._create_frames()
         self.info_display = InfoDisplay(self.left_frame)
         self._create_buttons()
+        self._create_theme_menu()
         self._create_entrys()
         self._create_search_box()
         self._setup_treeview()
@@ -114,17 +123,17 @@ class MainWindow(tk.Tk):
         It first prompts the user for confirmation and then deletes the
         selected records. The Treeview is refreshed upon successful deletion.
         """
-        response = tk.messagebox.askyesno(
-            'Confirmation',
-            'Are you sure you want to delete the selected entries?')
-
-        if not response:
-            return
-
         try:
             selected_rows_iids = self.treeview.selection()
             if not selected_rows_iids:
                 raise GUIValidationError('Select one or more rows to delete!')
+
+            response = messagebox.askyesno(
+                'Confirmation',
+                'Are you sure you want to delete the selected entries?')
+
+            if not response:
+                return
 
             ids_to_delete = [int(iid) for iid in selected_rows_iids]
             self.db_manager.delete_rows(ids_to_delete)
@@ -149,11 +158,36 @@ class MainWindow(tk.Tk):
         """
         Creates the control buttons for the application (Add, Update, Delete).
         """
-        button_frame = Frame(
+        self.button_frame = Frame(
             self.right_frame, text='Options', side='top', anchor='w')
-        Button(button_frame, text='Add', command=self.add_row)
-        Button(button_frame, text='Update', command=self.update_row)
-        Button(button_frame, text='Delete', command=self.delete_rows)
+        Button(self.button_frame, text='Add', command=self.add_row)
+        Button(self.button_frame, text='Update', command=self.update_row)
+        Button(self.button_frame, text='Delete', command=self.delete_rows)
+
+    def _create_theme_menu(self):
+        """
+        Creates a Combobox widget for selecting application themes.
+
+        The widget is populated with a list of available themes and its
+        selection event is bound to a method that changes the theme.
+        """
+        self.selected_theme = tk.StringVar(value=self.available_themes[0])
+        self.combobox = ttk.Combobox(
+            self.button_frame, values=self.available_themes, state='readonly',
+            textvariable=self.selected_theme)
+        self.combobox.bind("<<ComboboxSelected>>", self._on_combobox_selection)
+        self.combobox.pack(side='right')
+
+    def _on_combobox_selection(self, event):
+        """
+        Handles the theme change when a new theme is selected from the
+        Combobox.
+
+        Args:
+            event (tk.Event): The event object for the Combobox selection.
+        """
+        theme = self.selected_theme.get()
+        self.style.theme_use(theme)
 
     def _create_entrys(self):
         """
@@ -448,6 +482,18 @@ class Button(ttk.Button):
 
     def __init__(self, master, text=None, command=None, side='left', padx=5,
                  pady=5):
+        """
+        Initializes the custom Button widget.
+
+        Args:
+            master (tk.Widget): The parent widget.
+            text (str, optional): The text to display on the button.
+            command (callable, optional): The function to call when the button
+                is clicked.
+            side (str, optional): The side of the master to pack the widget.
+            padx (int, optional): Horizontal padding.
+            pady (int, optional): Vertical padding.
+        """
         super().__init__(master, text=text, command=command)
         self.pack(side=side, padx=padx, pady=pady)
 
@@ -459,6 +505,21 @@ class Frame(ttk.LabelFrame):
 
     def __init__(self, master, text='', side='left', padx=10, pady=10,
                  anchor='center', expand=True, fill='both'):
+        """
+        Initializes the custom Frame widget.
+
+        Args:
+            master (tk.Widget): The parent widget.
+            text (str, optional): The text label for the frame.
+            side (str, optional): The side of the master to pack the widget.
+            padx (int, optional): Horizontal padding.
+            pady (int, optional): Vertical padding.
+            anchor (str, optional): The position of the widget in its pack.
+            expand (bool, optional): Whether to expand the widget to fill
+            space.
+            fill (str, optional): How to fill the space allocated to the
+            widget.
+        """
         super().__init__(master, text=text)
         self.pack(side=side, padx=padx, pady=pady, anchor=anchor,
                   expand=expand, fill=fill)
@@ -471,6 +532,21 @@ class Entry(ttk.Entry):
 
     def __init__(self, master, text='', side='top', expand=False, width='40',
                  padx=5, pady=5, textvariable=None):
+        """
+        Initializes the custom Entry widget.
+
+        Args:
+            master (tk.Widget): The parent widget.
+            text (str, optional): The text label for the entry frame.
+            side (str, optional): The side of the master to pack the widget.
+            expand (bool, optional): Whether to expand the widget to fill
+            space.
+            width (str, optional): The width of the entry box.
+            padx (int, optional): Horizontal padding.
+            pady (int, optional): Vertical padding.
+            textvariable (tk.StringVar, optional): A variable linked to the
+                entry's content.
+        """
         self.frame = Frame(master, text=text, side=side, expand=expand)
         super().__init__(self.frame, width=width, textvariable=textvariable)
         self.pack(padx=padx, pady=pady)
