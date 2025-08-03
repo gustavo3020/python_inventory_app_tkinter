@@ -1,8 +1,9 @@
 import tkinter as tk
 import ttkbootstrap as ttk
+import openpyxl
 from ttkbootstrap import Style
 from database_manager import DatabaseError
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
 
 
 class MainWindow(tk.Tk):
@@ -148,6 +149,56 @@ class MainWindow(tk.Tk):
         except Exception as e:
             self._handle_exception(e)
 
+    def export_data(self):
+        """
+        Exports the currently displayed data to an Excel file (.xlsx).
+        Orchestrates the entire export process, including getting the file
+        path, fetching data, and writing to the Excel file.
+        """
+        try:
+            file_path = self._get_export_path()
+            if not file_path:
+                return
+
+            data = self.db_manager.get_data(
+                search_term=self.user_entry.get(),
+                order_by_column=self.treeview.current_sort_column,
+                order_direction=self.treeview.sort_direction
+            )
+
+            headers = list(self.db_manager.get_column_types().keys())
+
+            self._write_data_to_excel(file_path, headers, data)
+            self.info_display.update_text(
+                f'Data exported successfully to {file_path}',
+                foreground='green', duration_ms=5000
+            )
+
+        except Exception as e:
+            self._handle_exception(e)
+
+    def _get_export_path(self):
+        """Prompts the user for a save location for the Excel file."""
+        return filedialog.asksaveasfilename(
+            defaultextension='.xlsx',
+            filetypes=[('Excel files', '*.xlsx'), ('All files', '*.*')]
+        )
+
+    def _write_data_to_excel(self, file_path, headers, data):
+        """Writes the provided headers and data to a new Excel file."""
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        sheet.title = "Inventory Data"
+
+        for col_idx, header in enumerate(headers, start=1):
+            sheet.cell(row=1, column=col_idx, value=header)
+
+        for row_idx, row_data in enumerate(data, start=2):
+            for col_idx, cell_value in enumerate(row_data, start=1):
+                sheet.cell(row=row_idx, column=col_idx, value=cell_value)
+
+        workbook.save(file_path)
+
     def _create_frames(self):
         """
         Creates the main frames for the application layout.
@@ -166,6 +217,7 @@ class MainWindow(tk.Tk):
         Button(self.button_frame, text='Add', command=self.add_row)
         Button(self.button_frame, text='Update', command=self.update_row)
         Button(self.button_frame, text='Delete', command=self.delete_rows)
+        Button(self.button_frame, text='Export', command=self.export_data)
 
     def _create_theme_menu(self):
         """
