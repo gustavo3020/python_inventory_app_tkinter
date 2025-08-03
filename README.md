@@ -2,6 +2,14 @@
 
 ---
 
+![alt text](images/image1.png)
+![alt text](images/image2.png)
+![alt text](images/image3.png)
+![alt text](images/image4.png)
+![alt text](images/image5.png)
+
+---
+
 ## Overview
 
 This is a simple desktop application for managing product inventory, built with **Python**, **Tkinter (Ttkbootstrap)** for the graphical user interface, and **SQLite** for data persistence. It demonstrates core CRUD (Create, Read, Update, Delete) operations in a user-friendly interface.
@@ -16,6 +24,8 @@ This is a simple desktop application for managing product inventory, built with 
 * **Robust Data Validation:** Includes input validation to ensure data integrity (e.g., proper data types for quantity and price, and handling of empty fields).
 * **Modular Architecture:** Designed with a clear separation of concerns, featuring a dedicated `DatabaseManager` class for database interactions and custom UI widget classes for a structured GUI.
 * **Error Handling:** Implements `try-except` blocks for database operations and user input, providing clear feedback on success or failure.
+* **Theme Management**: The user can choose from a variety of themes to customize the look and feel of the application.
+* **Export to Excel:** Easily export the current filtered and sorted data to a `.xlsx` file.
 
 ---
 
@@ -69,7 +79,9 @@ This is a simple desktop application for managing product inventory, built with 
 ├── main.py               # Application entry point, initializes GUI and DB manager  
 ├── gui_manager.py        # Contains GUI classes and logic for interaction  
 ├── database_manager.py   # Handles all database operations (SQLite)  
-└── inventory.db          # (Generated after first run) The SQLite database file
+├── config_manager.py     # Manages application settings, such as the selected theme, by reading and writing to the `config.ini` file  
+├── inventory.db          # (Generated after first run) The SQLite database file  
+└── config.ini            # A configuration file that stores application settings.
 
 
 ---
@@ -83,3 +95,8 @@ Feel free to fork this repository, make improvements, and submit pull requests.
 ## License
 
 This project is licensed under the MIT License.
+
+## Contact
+
+Gustavo Aguiar - gustavo-luigi@hotmail.com - https://www.linkedin.com/in/gustavo-aguiar-a5803a191/
+
